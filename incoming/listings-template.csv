@@ -1,0 +1,4 @@
+name,category,subcategory,price,compareAtPrice,description,sizes,image1,image2,featured,isNew,trending
+Example Linen Shirt,men,Shirts,89,119,"Relaxed linen shirt, garment washed for softness.",XS|S|M|L|XL,example-shirt-1.jpg,example-shirt-2.jpg,yes,yes,no
+Example Wool Scarf,women,Accessories,59,,"Brushed wool scarf, one size.",One Size,example-scarf-1.jpg,,no,yes,yes
+
