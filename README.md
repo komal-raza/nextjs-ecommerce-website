@@ -51,8 +51,8 @@ Configure these in `.env.local` for local development, and via `insforge deploym
 ```env
 # InsForge Backend
 NEXT_PUBLIC_INSFORGE_URL=https://rehv5rzn.us-east.insforge.app
-NEXT_PUBLIC_INSFORGE_ANON_KEY=ik_aa3db7aa34a03ad07963abc5b5d752f0
-INSFORGE_API_KEY=ik_aa3db7aa34a03ad07963abc5b5d752f0
+NEXT_PUBLIC_INSFORGE_ANON_KEY=i*************0
+INSFORGE_API_KEY=i*****************0
 
 # Stripe Payments
 STRIPE_SECRET_KEY=sk_test_...
