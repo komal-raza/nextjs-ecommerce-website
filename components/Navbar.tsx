@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { getProducts } from "@/lib/api";
 import type { Product } from "@/lib/data";
 import { money } from "@/lib/format";
+import { insforge } from "@/lib/insforge";
 import { useCart } from "@/lib/store";
 import { BagIcon, CloseIcon, MenuIcon, SearchIcon, UserIcon } from "./Icons";
 import SafeImage from "./SafeImage";
@@ -24,7 +25,24 @@ export default function Navbar() {
   const [q, setQ] = useState("");
   const [suggestions, setSuggestions] = useState<Product[]>([]);
   const [scrolled, setScrolled] = useState(false);
+  const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    insforge.auth.getCurrentUser().then(({ data }) => {
+      setUser(data?.user ?? null);
+    });
+
+    const unsubscribe = insforge.auth.onAuthStateChange(() => {
+      insforge.auth.getCurrentUser().then(({ data }) => {
+        setUser(data?.user ?? null);
+      });
+    });
+
+    return () => {
+      if (typeof unsubscribe === "function") unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -92,8 +110,28 @@ export default function Navbar() {
           <button className="icon-btn" aria-label="Search" onClick={() => setSearchOpen(true)}>
             <SearchIcon />
           </button>
-          <Link href="/login" className="icon-btn nav__account" aria-label="Account">
+          <Link
+            href={user ? "/profile" : "/login"}
+            className={`icon-btn nav__account ${user ? "is-signed-in" : ""}`}
+            aria-label={user ? "Profile" : "Account"}
+            style={{ position: "relative" }}
+          >
             <UserIcon />
+            {user && (
+              <span
+                style={{
+                  position: "absolute",
+                  top: "6px",
+                  right: "6px",
+                  width: "7px",
+                  height: "7px",
+                  borderRadius: "50%",
+                  background: "var(--ink)",
+                  boxShadow: "0 0 0 1.5px var(--bg)",
+                }}
+                aria-hidden="true"
+              />
+            )}
           </Link>
           <Link href="/cart" className="icon-btn nav__cart" aria-label={`Cart, ${count} items`}>
             <BagIcon />
@@ -116,7 +154,9 @@ export default function Navbar() {
             {LINKS.map((l) => (
               <Link key={l.href} href={l.href} onClick={() => setDrawer(false)}>{l.label}</Link>
             ))}
-            <Link href="/login" onClick={() => setDrawer(false)}>Account</Link>
+            <Link href={user ? "/profile" : "/login"} onClick={() => setDrawer(false)}>
+              {user ? "Profile" : "Account"}
+            </Link>
             <Link href="/cart" onClick={() => setDrawer(false)}>Cart ({count})</Link>
           </nav>
           <div className="drawer__foot">
