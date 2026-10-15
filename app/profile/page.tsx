@@ -21,7 +21,9 @@ interface OrderRecord {
   subtotal: number | string;
   shipping: number | string;
   total: number | string;
-  status: "pending" | "paid" | "shipped" | "delivered" | string;
+  status: "pending" | "confirmed" | "shipped" | "delivered" | string;
+  payment_status?: "paid" | "unpaid" | string;
+  payment_method?: string;
   contact?: {
     name?: string;
     email?: string;
@@ -39,7 +41,7 @@ interface OrderRecord {
 
 const ORDER_STEPS = [
   { key: "pending", label: "Pending" },
-  { key: "paid", label: "Paid" },
+  { key: "confirmed", label: "Confirmed" },
   { key: "shipped", label: "Shipped" },
   { key: "delivered", label: "Delivered" },
 ];
@@ -62,7 +64,6 @@ function StatusTracker({ currentStatus }: { currentStatus: string }) {
         {ORDER_STEPS.map((step, idx) => {
           const isDone = idx < activeIdx;
           const isCurrent = idx === activeIdx;
-          const isUpcoming = idx > activeIdx;
 
           return (
             <div
@@ -75,7 +76,6 @@ function StatusTracker({ currentStatus }: { currentStatus: string }) {
                 position: "relative",
               }}
             >
-              {/* Step indicator bar */}
               <div
                 style={{
                   width: "100%",
@@ -114,6 +114,7 @@ export default function ProfilePage() {
   const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [signingOut, setSigningOut] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -126,6 +127,11 @@ export default function ProfilePage() {
       }
 
       setUser(data.user);
+
+      const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "razaa.komal@gmail.com";
+      if (data.user?.email && data.user.email.toLowerCase() === adminEmail.toLowerCase()) {
+        setIsAdmin(true);
+      }
 
       // Fetch user's orders
       const { data: orderData, error: orderErr } = await insforge.database
@@ -195,6 +201,62 @@ export default function ProfilePage() {
         </button>
       </header>
 
+      {isAdmin && (
+        <div
+          style={{
+            background: "var(--ink)",
+            color: "#ffffff",
+            padding: "1.25rem 1.5rem",
+            marginBottom: "2.5rem",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: "1rem",
+            borderRadius: "2px",
+          }}
+        >
+          <div>
+            <span
+              style={{
+                display: "inline-block",
+                fontSize: "10px",
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                fontWeight: 700,
+                background: "rgba(255,255,255,0.2)",
+                padding: "0.2rem 0.5rem",
+                marginBottom: "0.4rem",
+                borderRadius: "2px",
+              }}
+            >
+              Verified Store Owner
+            </span>
+            <h3 style={{ margin: 0, fontSize: "16px", color: "#ffffff", fontWeight: 500 }}>
+              Store Management Dashboard
+            </h3>
+            <p style={{ margin: "0.25rem 0 0", fontSize: "13px", color: "rgba(255,255,255,0.7)" }}>
+              Manage product listings, pricing, and live website content.
+            </p>
+          </div>
+          <Link
+            href="/admin"
+            style={{
+              background: "#ffffff",
+              color: "var(--ink)",
+              padding: "0.6rem 1.25rem",
+              fontSize: "12px",
+              fontWeight: 600,
+              textDecoration: "none",
+              letterSpacing: "0.05em",
+              borderRadius: "2px",
+            }}
+          >
+            Open Dashboard &rarr;
+          </Link>
+        </div>
+      )}
+
       <section>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "1.5rem" }}>
           <h2 className="h3">Order History</h2>
@@ -232,6 +294,9 @@ export default function ProfilePage() {
                   })
                 : "Recent";
 
+              const isPaid = ord.payment_status === "paid";
+              const isUnpaid = !isPaid && (ord.payment_status === "unpaid" || ord.status === "pending");
+
               return (
                 <article
                   key={ord.id}
@@ -261,19 +326,56 @@ export default function ProfilePage() {
                       </p>
                     </div>
 
-                    <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap", alignItems: "flex-start" }}>
                       <div>
                         <p className="micro" style={{ color: "var(--stone)" }}>Date</p>
                         <p style={{ fontSize: "13px" }}>{dateStr}</p>
                       </div>
+
+                      <div>
+                        <p className="micro" style={{ color: "var(--stone)" }}>Payment</p>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginTop: "0.2rem" }}>
+                          <span
+                            style={{
+                              display: "inline-block",
+                              padding: "0.15rem 0.5rem",
+                              borderRadius: "2px",
+                              fontSize: "11px",
+                              fontWeight: 600,
+                              textTransform: "uppercase",
+                              letterSpacing: "0.05em",
+                              backgroundColor: isPaid ? "#dcfce7" : "#fef3c7",
+                              color: isPaid ? "#15803d" : "#b45309",
+                            }}
+                          >
+                            {isPaid ? "Paid" : "Unpaid"}
+                          </span>
+                          <span className="micro" style={{ color: "var(--ink-soft)" }}>
+                            ({ord.payment_method || "Stripe"})
+                          </span>
+                        </div>
+                      </div>
+
                       <div>
                         <p className="micro" style={{ color: "var(--stone)" }}>Total</p>
                         <p style={{ fontSize: "13px", fontWeight: 600 }}>{money(Number(ord.total))}</p>
                       </div>
+
+                      {isUnpaid && (
+                        <div style={{ alignSelf: "center" }}>
+                          <Link
+                            href={`/payment/${ord.id}`}
+                            className="btn btn--dark"
+                            style={{ padding: "0.45rem 1rem", fontSize: "12px" }}
+                          >
+                            Pay Now &rarr;
+                          </Link>
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  {/* Status tracker */}
+                  {/* Status tracker: Pending -> Confirmed -> Shipped -> Delivered */}
                   <StatusTracker currentStatus={ord.status} />
 
                   {/* Items snapshot */}
@@ -319,4 +421,3 @@ export default function ProfilePage() {
     </main>
   );
 }
-

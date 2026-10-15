@@ -3,10 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { money, shippingFor } from "@/lib/format";
-import { insforge } from "@/lib/insforge";
+import { money } from "@/lib/format";
+import { insforge, getClientAuthToken } from "@/lib/insforge";
 import { useCart } from "@/lib/store";
-import { CheckIcon } from "./Icons";
 import { OrderSummary } from "./CartView";
 
 type Errors = Record<string, string>;
@@ -30,6 +29,7 @@ function Field({
   autoComplete,
   inputMode,
   defaultValue,
+  required = true,
 }: {
   name: string;
   label: string;
@@ -39,10 +39,13 @@ function Field({
   autoComplete?: string;
   inputMode?: "numeric" | "tel" | "email" | "text";
   defaultValue?: string;
+  required?: boolean;
 }) {
   return (
     <div className={`field ${errors[name] ? "has-error" : ""}`}>
-      <label htmlFor={name}>{label}</label>
+      <label htmlFor={name}>
+        {label} {required && <span style={{ color: "#e11d48", fontWeight: 700 }} title="Required field">*</span>}
+      </label>
       <input
         id={name}
         name={name}
@@ -51,6 +54,8 @@ function Field({
         placeholder={placeholder}
         autoComplete={autoComplete}
         inputMode={inputMode}
+        required={required}
+        aria-required={required}
         aria-invalid={!!errors[name]}
       />
       {errors[name] && <span className="field__error">{errors[name]}</span>}
@@ -60,11 +65,9 @@ function Field({
 
 export default function CheckoutForm() {
   const router = useRouter();
-  const { items, hydrated, subtotal, clear } = useCart();
+  const { items, hydrated } = useCart();
   const [errors, setErrors] = useState<Errors>({});
-  const [order, setOrder] = useState<{ id: string; status: string; total: number } | null>(null);
   const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
-  const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -77,9 +80,11 @@ export default function CheckoutForm() {
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (submitting) return; // Prevent duplicate submissions
+
     setSubmitError(null);
 
-    // Validate fields
+    // Validate all required fields
     const data = new FormData(e.currentTarget);
     const next: Errors = {};
     for (const [key, msg] of Object.entries(REQUIRED)) {
@@ -97,48 +102,15 @@ export default function CheckoutForm() {
       return;
     }
 
-    // Require authentication so order is properly associated with the account
-    if (!user) {
-      router.push("/login?redirect=/checkout");
-      return;
-    }
-
     setSubmitting(true);
 
     try {
-      let receiptUrl: string | null = null;
-
-      // 1. Upload payment receipt to payment-uploads bucket if provided
-      if (receiptFile) {
-        const ext = receiptFile.name.split(".").pop() || "bin";
-        const filename = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-        const { data: uploadData, error: uploadErr } = await insforge.storage
-          .from("payment-uploads")
-          .upload(filename, receiptFile);
-
-        if (uploadErr) {
-          console.warn("Receipt upload notice:", uploadErr.message);
-        }
-        receiptUrl = uploadData?.url || filename;
-      }
-
-      // 2. Insert order row into orders table
-      const shipping = shippingFor(subtotal);
-      const total = subtotal + shipping;
-
       const orderPayload = {
-        user_id: user.id,
         items: items.map((i) => ({
           id: i.id,
-          name: i.name,
           size: i.size,
           qty: i.qty,
-          price: i.price,
         })),
-        subtotal,
-        shipping,
-        total,
-        status: "pending",
         contact: {
           name: String(data.get("name") ?? "").trim(),
           email,
@@ -150,48 +122,36 @@ export default function CheckoutForm() {
           zip: String(data.get("zip") ?? "").trim(),
           country: String(data.get("country") ?? "").trim(),
         },
-        payment_receipt_url: receiptUrl,
       };
 
-      const { data: createdOrder, error: orderErr } = await insforge.database
-        .from("orders")
-        .insert([orderPayload])
-        .select("id, status, total")
-        .single();
-
-      if (orderErr || !createdOrder) {
-        throw new Error(orderErr?.message || "Failed to create order");
+      // If user is authenticated, attach token to associate order with account;
+      // otherwise, proceed smoothly with Guest Checkout.
+      const token = getClientAuthToken();
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (token && user) {
+        headers["Authorization"] = `Bearer ${token}`;
       }
 
-      clear();
-      setOrder({
-        id: createdOrder.id,
-        status: createdOrder.status || "pending",
-        total: Number(createdOrder.total),
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers,
+        body: JSON.stringify(orderPayload),
       });
-      window.scrollTo({ top: 0, behavior: "smooth" });
+
+      const result = await res.json();
+      if (!res.ok) {
+        throw new Error(result.error || "Failed to create order");
+      }
+
+      // Redirect immediately to payment interstitial for Stripe checkout
+      router.push(`/payment/${result.orderId}`);
     } catch (err: unknown) {
       setSubmitError((err as Error).message || "Checkout failed. Please try again.");
-    } finally {
       setSubmitting(false);
     }
   };
-
-  if (order) {
-    return (
-      <div className="container empty-state confirm">
-        <span className="confirm__tick"><CheckIcon size={28} /></span>
-        <p className="micro">Order confirmed · Status: {order.status}</p>
-        <h1 className="h1">Thank you for your order</h1>
-        <p>Your order ID is <strong style={{ fontFamily: "monospace" }}>{order.id}</strong>.</p>
-        <p>Total charged: {money(order.total)}. Status is currently <strong>{order.status}</strong>.</p>
-        <div className="empty-state__cta" style={{ marginTop: "2rem" }}>
-          <Link href="/profile" className="btn btn--dark">View in Profile</Link>
-          <Link href="/" className="btn btn--outline">Back to Home</Link>
-        </div>
-      </div>
-    );
-  }
 
   if (!hydrated) {
     return (
@@ -216,9 +176,14 @@ export default function CheckoutForm() {
 
   return (
     <div className="container cart-page">
-      <h1 className="h1">Checkout</h1>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: "1rem", marginBottom: "0.5rem" }}>
+        <h1 className="h1" style={{ margin: 0 }}>Checkout</h1>
+        <span className="micro" style={{ color: "var(--ink-soft)" }}>
+          <span style={{ color: "#e11d48", fontWeight: 700 }}>*</span> Required fields
+        </span>
+      </div>
 
-      {!user && (
+      {!user ? (
         <div
           style={{
             background: "var(--bg-alt)",
@@ -233,10 +198,25 @@ export default function CheckoutForm() {
             gap: "0.5rem",
           }}
         >
-          <span>Already have an account? Sign in for saved details and order tracking.</span>
+          <span>
+            Checking out as a <strong>Guest</strong>. Have an account? Sign in to save this order to your profile.
+          </span>
           <Link href="/login?redirect=/checkout" className="link-underline" style={{ fontWeight: 600 }}>
             Sign In &rarr;
           </Link>
+        </div>
+      ) : (
+        <div
+          style={{
+            background: "var(--bg-alt)",
+            border: "1px solid var(--line)",
+            padding: "0.75rem 1.25rem",
+            marginBottom: "1.5rem",
+            fontSize: "13px",
+            color: "var(--ink-soft)",
+          }}
+        >
+          Signed in as <strong>{user.email}</strong>. This order will be saved to your account.
         </div>
       )}
 
@@ -259,57 +239,63 @@ export default function CheckoutForm() {
       <div className="cart-layout">
         <form ref={formRef} className="checkout-form" onSubmit={submit} noValidate>
           <fieldset>
-            <legend className="h3">Contact</legend>
-            <Field name="name" label="Full name" errors={errors} autoComplete="name" />
+            <legend className="h3">Contact Details</legend>
+            <Field name="name" label="Full name" errors={errors} autoComplete="name" placeholder="e.g. Jane Doe" />
             <div className="field-row">
               <Field
                 name="email"
-                label="Email"
+                label="Email address"
                 type="email"
                 errors={errors}
                 defaultValue={user?.email || ""}
                 autoComplete="email"
                 inputMode="email"
+                placeholder="name@example.com"
               />
-              <Field name="phone" label="Phone" type="tel" errors={errors} autoComplete="tel" inputMode="tel" />
+              <Field
+                name="phone"
+                label="Phone number"
+                type="tel"
+                errors={errors}
+                autoComplete="tel"
+                inputMode="tel"
+                placeholder="+1 (555) 000-0000"
+              />
             </div>
           </fieldset>
 
           <fieldset>
-            <legend className="h3">Shipping</legend>
-            <Field name="address" label="Address" errors={errors} autoComplete="street-address" />
+            <legend className="h3">Shipping Address</legend>
+            <Field name="address" label="Street address" errors={errors} autoComplete="street-address" placeholder="123 Fashion Blvd, Apt 4B" />
             <div className="field-row">
-              <Field name="city" label="City" errors={errors} autoComplete="address-level2" />
-              <Field name="zip" label="ZIP / Postcode" errors={errors} autoComplete="postal-code" />
+              <Field name="city" label="City" errors={errors} autoComplete="address-level2" placeholder="New York" />
+              <Field name="zip" label="ZIP / Postcode" errors={errors} autoComplete="postal-code" placeholder="10001" />
             </div>
-            <Field name="country" label="Country" errors={errors} autoComplete="country-name" />
+            <Field name="country" label="Country" errors={errors} autoComplete="country-name" placeholder="United States" />
           </fieldset>
 
           <fieldset>
-            <legend className="h3">Payment Receipt</legend>
-            <p className="dummy-note" style={{ marginBottom: "1rem" }}>
-              Upload your payment receipt (image or PDF) to verify your transaction.
-            </p>
-            <div className="field">
-              <label htmlFor="receipt">Receipt document (optional)</label>
-              <input
-                id="receipt"
-                name="receipt"
-                type="file"
-                accept="image/*,application/pdf"
-                onChange={(e) => setReceiptFile(e.target.files?.[0] || null)}
-                disabled={submitting}
-              />
-              {receiptFile && (
-                <span className="micro" style={{ marginTop: "0.3rem", color: "var(--ink-soft)" }}>
-                  Selected: {receiptFile.name} ({(receiptFile.size / 1024).toFixed(1)} KB)
-                </span>
-              )}
+            <legend className="h3">Payment Method</legend>
+            <div
+              style={{
+                background: "var(--bg-alt)",
+                border: "1px solid var(--line)",
+                padding: "1.25rem",
+                borderRadius: "2px",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+                <span style={{ fontWeight: 600, fontSize: "14px" }}>Stripe Secure Checkout</span>
+                <span className="micro" style={{ letterSpacing: "0.05em", color: "var(--ink-soft)" }}>CARD / APPLE PAY / GOOGLE PAY</span>
+              </div>
+              <p style={{ margin: 0, fontSize: "13px", color: "var(--ink-soft)", lineHeight: 1.5 }}>
+                You will be redirected to Stripe to securely enter your card details and finalize your payment. No account required.
+              </p>
             </div>
           </fieldset>
 
           <button type="submit" className="btn btn--dark btn--block" disabled={submitting}>
-            {submitting ? "Processing Order…" : "Place Order"}
+            {submitting ? "Creating Order…" : "Place Order & Pay with Stripe"}
           </button>
         </form>
 

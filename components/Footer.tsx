@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getSiteSettings } from "@/lib/settings";
 import {
   FacebookIcon,
   InstagramIcon,
@@ -7,7 +8,9 @@ import {
   YoutubeIcon,
 } from "./Icons";
 
-export default function Footer() {
+export default async function Footer() {
+  const settings = await getSiteSettings();
+
   return (
     <footer className="footer">
       <div className="container footer__grid">
@@ -18,11 +21,31 @@ export default function Footer() {
             considered craft — designed to be worn for years, not seasons.
           </p>
           <div className="socials">
-            <a href="https://instagram.com" aria-label="Instagram" target="_blank" rel="noreferrer"><InstagramIcon /></a>
-            <a href="https://facebook.com" aria-label="Facebook" target="_blank" rel="noreferrer"><FacebookIcon /></a>
-            <a href="https://pinterest.com" aria-label="Pinterest" target="_blank" rel="noreferrer"><PinterestIcon /></a>
-            <a href="https://x.com" aria-label="X" target="_blank" rel="noreferrer"><XIcon /></a>
-            <a href="https://youtube.com" aria-label="YouTube" target="_blank" rel="noreferrer"><YoutubeIcon /></a>
+            {settings.social_instagram && (
+              <a href={settings.social_instagram} aria-label="Instagram" target="_blank" rel="noreferrer">
+                <InstagramIcon />
+              </a>
+            )}
+            {settings.social_facebook && (
+              <a href={settings.social_facebook} aria-label="Facebook" target="_blank" rel="noreferrer">
+                <FacebookIcon />
+              </a>
+            )}
+            {settings.social_pinterest && (
+              <a href={settings.social_pinterest} aria-label="Pinterest" target="_blank" rel="noreferrer">
+                <PinterestIcon />
+              </a>
+            )}
+            {settings.social_x && (
+              <a href={settings.social_x} aria-label="X" target="_blank" rel="noreferrer">
+                <XIcon />
+              </a>
+            )}
+            {settings.social_youtube && (
+              <a href={settings.social_youtube} aria-label="YouTube" target="_blank" rel="noreferrer">
+                <YoutubeIcon />
+              </a>
+            )}
           </div>
         </div>
 
@@ -55,4 +78,3 @@ export default function Footer() {
     </footer>
   );
 }
-

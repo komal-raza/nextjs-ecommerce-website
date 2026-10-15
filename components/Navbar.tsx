@@ -26,7 +26,19 @@ export default function Navbar() {
   const [suggestions, setSuggestions] = useState<Product[]>([]);
   const [scrolled, setScrolled] = useState(false);
   const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
+  const [announcement, setAnnouncement] = useState("Free worldwide shipping on orders over $75");
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.settings?.announcement_bar) {
+          setAnnouncement(data.settings.announcement_bar);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     insforge.auth.getCurrentUser().then(({ data }) => {
@@ -92,7 +104,7 @@ export default function Navbar() {
 
   return (
     <header className={`header ${scrolled ? "is-scrolled" : ""}`}>
-      <div className="announce">Free worldwide shipping on orders over $75</div>
+      <div className="announce">{announcement}</div>
       <div className="container nav">
         <button className="icon-btn nav__burger" aria-label="Open menu" onClick={() => setDrawer(true)}>
           <MenuIcon />
