@@ -17,7 +17,7 @@ export default function Hero() {
           preload="auto"
           poster="/images/hero-poster.jpg"
         >
-          <source src="/videos/hero.mp4" type="video/mp4" />
+          <source src="/videos/herovideo.mp4" type="video/mp4" />
         </video>
         <div className="hero__overlay" />
       </div>

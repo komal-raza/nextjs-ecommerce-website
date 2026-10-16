@@ -36,7 +36,7 @@ export default function AdminProductsPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
-  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
 
   // Form fields
   const [formName, setFormName] = useState("");
@@ -114,6 +114,7 @@ export default function AdminProductsPage() {
     setIsCreating(false);
     setFormError(null);
     setFormSuccess(null);
+    setUploadingIndex(null);
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
@@ -121,7 +122,7 @@ export default function AdminProductsPage() {
     if (!file) return;
 
     try {
-      setUploadingImage(true);
+      setUploadingIndex(index);
       const ext = file.name.split(".").pop() || "jpg";
       const filename = `admin-upload-${Date.now()}-${Math.random().toString(36).slice(2, 6)}.${ext}`;
 
@@ -144,7 +145,8 @@ export default function AdminProductsPage() {
     } catch (err: unknown) {
       alert("Failed to upload image: " + ((err as Error).message || "Unknown error"));
     } finally {
-      setUploadingImage(false);
+      setUploadingIndex(null);
+      e.target.value = "";
     }
   };
 
@@ -679,45 +681,50 @@ export default function AdminProductsPage() {
                   Product Images (Primary &amp; Hover) *
                 </label>
                 <div style={{ display: "grid", gap: "0.75rem" }}>
-                  {formImages.map((imgUrl, idx) => (
-                    <div key={idx} style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-                      <input
-                        type="text"
-                        value={imgUrl}
-                        onChange={(e) => {
-                          const next = [...formImages];
-                          next[idx] = e.target.value;
-                          setFormImages(next);
-                        }}
-                        placeholder={idx === 0 ? "Primary image URL" : "Secondary / hover image URL"}
-                        style={{
-                          flex: 1,
-                          padding: "0.6rem",
-                          border: "1px solid var(--line)",
-                          fontSize: "13px",
-                        }}
-                      />
-                      <label
-                        style={{
-                          background: "var(--bg-alt)",
-                          border: "1px solid var(--line)",
-                          padding: "0.55rem 0.8rem",
-                          fontSize: "12px",
-                          cursor: uploadingImage ? "not-allowed" : "pointer",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {uploadingImage ? "Uploading…" : "Upload"}
+                  {formImages.map((imgUrl, idx) => {
+                    const isUploadingThis = uploadingIndex === idx;
+                    const isUploadingAny = uploadingIndex !== null;
+                    return (
+                      <div key={idx} style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
                         <input
-                          type="file"
-                          accept="image/*"
-                          style={{ display: "none" }}
-                          disabled={uploadingImage}
-                          onChange={(e) => handleImageUpload(e, idx)}
+                          type="text"
+                          value={imgUrl}
+                          onChange={(e) => {
+                            const next = [...formImages];
+                            next[idx] = e.target.value;
+                            setFormImages(next);
+                          }}
+                          placeholder={idx === 0 ? "Primary image URL" : "Secondary / hover image URL"}
+                          style={{
+                            flex: 1,
+                            padding: "0.6rem",
+                            border: "1px solid var(--line)",
+                            fontSize: "13px",
+                          }}
                         />
-                      </label>
-                    </div>
-                  ))}
+                        <label
+                          style={{
+                            background: "var(--bg-alt)",
+                            border: "1px solid var(--line)",
+                            padding: "0.55rem 0.8rem",
+                            fontSize: "12px",
+                            cursor: isUploadingAny ? "not-allowed" : "pointer",
+                            whiteSpace: "nowrap",
+                            opacity: isUploadingAny && !isUploadingThis ? 0.6 : 1,
+                          }}
+                        >
+                          {isUploadingThis ? "Uploading…" : "Upload"}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            style={{ display: "none" }}
+                            disabled={isUploadingAny}
+                            onChange={(e) => handleImageUpload(e, idx)}
+                          />
+                        </label>
+                      </div>
+                    );
+                  })}
                   <button
                     type="button"
                     onClick={() => setFormImages([...formImages, ""])}
