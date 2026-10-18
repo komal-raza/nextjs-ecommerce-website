@@ -12,7 +12,7 @@ export default async function ContactPage() {
       <h1 className="h1">Contact</h1>
       <p>Our client care team is available {settings.contact_hours || "Monday to Friday, 9am – 6pm"}.</p>
       <p>
-        <strong>Email:</strong> {settings.contact_email || "care@velour.example"}
+        <strong>Email:</strong> {settings.contact_email || "care@eluara.example"}
         <br />
         <strong>Phone:</strong> {settings.contact_phone || "+1 (555) 010-2030"}
         <br />

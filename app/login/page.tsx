@@ -7,7 +7,7 @@ export default function LoginPage() {
   return (
     <div className="container auth-page">
       <p className="micro">Your account</p>
-      <h1 className="h1">Welcome to VELOUR</h1>
+      <h1 className="h1">Welcome to ELUARA</h1>
       <LoginTabs />
     </div>
   );

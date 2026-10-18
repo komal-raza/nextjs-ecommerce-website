@@ -1,13 +1,22 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { CartProvider } from "@/lib/store";
 import { ToastProvider } from "@/components/Toast";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import PageLoader from "@/components/PageLoader";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: { default: "VELOUR — Premium Men's & Women's Fashion", template: "%s — VELOUR" },
-  description: "VELOUR: considered essentials in natural fabrics for men and women. Free worldwide shipping over $75.",
+  title: { default: "ELUARA — Premium Men's & Women's Fashion", template: "%s — ELUARA" },
+  description: "ELUARA: considered essentials in natural fabrics for men and women. Free worldwide shipping over $75.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: "cover",
+  themeColor: "#faf8f5",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -22,6 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body>
+        <PageLoader />
         <CartProvider>
           <ToastProvider>
             <Navbar />
