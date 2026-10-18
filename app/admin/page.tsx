@@ -37,6 +37,8 @@ export default function AdminProductsPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
+  const [draggedImageIndex, setDraggedImageIndex] = useState<number | null>(null);
+  const [dragOverImageIndex, setDragOverImageIndex] = useState<number | null>(null);
 
   // Form fields
   const [formName, setFormName] = useState("");
@@ -148,6 +150,65 @@ export default function AdminProductsPage() {
       setUploadingIndex(null);
       e.target.value = "";
     }
+  };
+
+  const addImageField = () => {
+    setFormImages((prev) => [...prev, ""]);
+  };
+
+  const removeImageField = (idxToRemove: number) => {
+    if (formImages.length <= 1) {
+      alert("At least one image must be present for a product.");
+      return;
+    }
+    setFormImages((prev) => prev.filter((_, idx) => idx !== idxToRemove));
+    if (uploadingIndex === idxToRemove) {
+      setUploadingIndex(null);
+    } else if (uploadingIndex !== null && uploadingIndex > idxToRemove) {
+      setUploadingIndex(uploadingIndex - 1);
+    }
+  };
+
+  const moveImageField = (fromIndex: number, toIndex: number) => {
+    if (toIndex < 0 || toIndex >= formImages.length || fromIndex === toIndex) return;
+    setFormImages((prev) => {
+      const next = [...prev];
+      const [movedItem] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, movedItem);
+      return next;
+    });
+  };
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedImageIndex(index);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", String(index));
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (dragOverImageIndex !== index) {
+      setDragOverImageIndex(index);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    if (draggedImageIndex !== null && draggedImageIndex !== targetIndex) {
+      moveImageField(draggedImageIndex, targetIndex);
+    }
+    setDraggedImageIndex(null);
+    setDragOverImageIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedImageIndex(null);
+    setDragOverImageIndex(null);
   };
 
   const toggleSize = (size: string) => {
@@ -677,15 +738,112 @@ export default function AdminProductsPage() {
 
               {/* Product Images */}
               <div>
-                <label style={{ fontSize: "12px", fontWeight: 600, display: "block", marginBottom: "0.4rem" }}>
-                  Product Images (Primary &amp; Hover) *
-                </label>
-                <div style={{ display: "grid", gap: "0.75rem" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "0.4rem" }}>
+                  <label style={{ fontSize: "12px", fontWeight: 600 }}>
+                    Product Images (At least 1 required) *
+                  </label>
+                  <span style={{ fontSize: "11px", color: "var(--ink-soft)" }}>
+                    Drag rows or use arrows to change position
+                  </span>
+                </div>
+                <div style={{ display: "grid", gap: "0.6rem" }}>
                   {formImages.map((imgUrl, idx) => {
                     const isUploadingThis = uploadingIndex === idx;
                     const isUploadingAny = uploadingIndex !== null;
+                    const isDragging = draggedImageIndex === idx;
+                    const isDragOver = dragOverImageIndex === idx;
+
                     return (
-                      <div key={idx} style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                      <div
+                        key={idx}
+                        draggable={!isUploadingAny}
+                        onDragStart={(e) => handleDragStart(e, idx)}
+                        onDragOver={(e) => handleDragOver(e, idx)}
+                        onDragLeave={handleDragLeave}
+                        onDrop={(e) => handleDrop(e, idx)}
+                        onDragEnd={handleDragEnd}
+                        style={{
+                          display: "flex",
+                          gap: "0.5rem",
+                          alignItems: "center",
+                          padding: "0.5rem",
+                          background: isDragOver ? "#f1f5f9" : isDragging ? "rgba(0,0,0,0.03)" : "var(--white)",
+                          border: isDragOver ? "2px dashed var(--ink)" : "1px solid var(--line)",
+                          borderRadius: "3px",
+                          opacity: isDragging ? 0.45 : 1,
+                          transition: "background 0.15s ease, border-color 0.15s ease",
+                        }}
+                      >
+                        {/* Drag Handle */}
+                        <div
+                          title="Drag up or down to reorder"
+                          style={{
+                            cursor: isUploadingAny ? "not-allowed" : "grab",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            padding: "0 0.2rem",
+                            color: "var(--stone)",
+                            userSelect: "none",
+                          }}
+                        >
+                          <svg width="14" height="18" viewBox="0 0 14 18" fill="currentColor">
+                            <circle cx="4" cy="4" r="1.5" />
+                            <circle cx="10" cy="4" r="1.5" />
+                            <circle cx="4" cy="9" r="1.5" />
+                            <circle cx="10" cy="9" r="1.5" />
+                            <circle cx="4" cy="14" r="1.5" />
+                            <circle cx="10" cy="14" r="1.5" />
+                          </svg>
+                        </div>
+
+                        {/* Position Badge */}
+                        <span
+                          style={{
+                            fontSize: "10px",
+                            fontWeight: 600,
+                            padding: "0.2rem 0.45rem",
+                            borderRadius: "2px",
+                            background: idx === 0 ? "var(--ink)" : idx === 1 ? "var(--bg-alt)" : "#f8fafc",
+                            color: idx === 0 ? "var(--bg)" : "var(--ink)",
+                            border: "1px solid var(--line)",
+                            whiteSpace: "nowrap",
+                            minWidth: "60px",
+                            textAlign: "center",
+                          }}
+                        >
+                          {idx === 0 ? "Primary" : idx === 1 ? "Hover" : `#${idx + 1}`}
+                        </span>
+
+                        {/* Mini Thumbnail Preview */}
+                        <div
+                          style={{
+                            width: "36px",
+                            height: "44px",
+                            background: "var(--bg-alt)",
+                            border: "1px solid var(--line)",
+                            borderRadius: "2px",
+                            overflow: "hidden",
+                            flexShrink: 0,
+                            display: "grid",
+                            placeItems: "center",
+                          }}
+                        >
+                          {imgUrl ? (
+                            <img
+                              src={imgUrl}
+                              alt=""
+                              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                              onError={(e) => {
+                                (e.target as HTMLElement).style.display = "none";
+                              }}
+                            />
+                          ) : (
+                            <span style={{ fontSize: "9px", color: "var(--stone)" }}>Empty</span>
+                          )}
+                        </div>
+
+                        {/* URL Input field */}
                         <input
                           type="text"
                           value={imgUrl}
@@ -694,23 +852,33 @@ export default function AdminProductsPage() {
                             next[idx] = e.target.value;
                             setFormImages(next);
                           }}
-                          placeholder={idx === 0 ? "Primary image URL" : "Secondary / hover image URL"}
+                          placeholder={
+                            idx === 0
+                              ? "Primary cover image URL"
+                              : idx === 1
+                              ? "Secondary hover image URL"
+                              : `Gallery image #${idx + 1} URL`
+                          }
                           style={{
                             flex: 1,
-                            padding: "0.6rem",
+                            padding: "0.55rem 0.65rem",
                             border: "1px solid var(--line)",
                             fontSize: "13px",
+                            minWidth: 0,
                           }}
                         />
+
+                        {/* Upload Button */}
                         <label
                           style={{
                             background: "var(--bg-alt)",
                             border: "1px solid var(--line)",
-                            padding: "0.55rem 0.8rem",
+                            padding: "0.5rem 0.75rem",
                             fontSize: "12px",
                             cursor: isUploadingAny ? "not-allowed" : "pointer",
                             whiteSpace: "nowrap",
                             opacity: isUploadingAny && !isUploadingThis ? 0.6 : 1,
+                            borderRadius: "2px",
                           }}
                         >
                           {isUploadingThis ? "Uploading…" : "Upload"}
@@ -722,22 +890,100 @@ export default function AdminProductsPage() {
                             onChange={(e) => handleImageUpload(e, idx)}
                           />
                         </label>
+
+                        {/* Move Up/Down Buttons */}
+                        <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                          <button
+                            type="button"
+                            disabled={idx === 0 || isUploadingAny}
+                            onClick={() => moveImageField(idx, idx - 1)}
+                            title="Move Up"
+                            style={{
+                              border: "1px solid var(--line)",
+                              background: "var(--white)",
+                              fontSize: "9px",
+                              width: "22px",
+                              height: "16px",
+                              display: "grid",
+                              placeItems: "center",
+                              cursor: idx === 0 || isUploadingAny ? "not-allowed" : "pointer",
+                              opacity: idx === 0 ? 0.3 : 1,
+                              borderRadius: "2px",
+                            }}
+                          >
+                            ▲
+                          </button>
+                          <button
+                            type="button"
+                            disabled={idx === formImages.length - 1 || isUploadingAny}
+                            onClick={() => moveImageField(idx, idx + 1)}
+                            title="Move Down"
+                            style={{
+                              border: "1px solid var(--line)",
+                              background: "var(--white)",
+                              fontSize: "9px",
+                              width: "22px",
+                              height: "16px",
+                              display: "grid",
+                              placeItems: "center",
+                              cursor: idx === formImages.length - 1 || isUploadingAny ? "not-allowed" : "pointer",
+                              opacity: idx === formImages.length - 1 ? 0.3 : 1,
+                              borderRadius: "2px",
+                            }}
+                          >
+                            ▼
+                          </button>
+                        </div>
+
+                        {/* Delete Button Icon */}
+                        <button
+                          type="button"
+                          disabled={formImages.length <= 1 || isUploadingAny}
+                          onClick={() => removeImageField(idx)}
+                          title={formImages.length <= 1 ? "At least one image must be present for a product" : "Remove this image"}
+                          style={{
+                            border: "1px solid #fecaca",
+                            background: formImages.length <= 1 ? "#f9fafb" : "#fef2f2",
+                            color: formImages.length <= 1 ? "var(--stone)" : "#b91c1c",
+                            width: "32px",
+                            height: "32px",
+                            display: "grid",
+                            placeItems: "center",
+                            cursor: formImages.length <= 1 || isUploadingAny ? "not-allowed" : "pointer",
+                            opacity: formImages.length <= 1 ? 0.35 : 1,
+                            borderRadius: "2px",
+                            flexShrink: 0,
+                          }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            <line x1="10" y1="11" x2="10" y2="17" />
+                            <line x1="14" y1="11" x2="14" y2="17" />
+                          </svg>
+                        </button>
                       </div>
                     );
                   })}
+
                   <button
                     type="button"
-                    onClick={() => setFormImages([...formImages, ""])}
+                    onClick={addImageField}
+                    disabled={uploadingIndex !== null}
                     style={{
                       background: "transparent",
                       border: "1px dashed var(--line)",
-                      padding: "0.4rem",
+                      padding: "0.55rem",
                       fontSize: "12px",
-                      cursor: "pointer",
+                      cursor: uploadingIndex !== null ? "not-allowed" : "pointer",
                       color: "var(--ink-soft)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "0.4rem",
+                      borderRadius: "2px",
                     }}
                   >
-                    + Add Another Image URL
+                    <span style={{ fontSize: "14px", fontWeight: "bold" }}>+</span> Add Another Image ({formImages.length} {formImages.length === 1 ? "image" : "images"})
                   </button>
                 </div>
               </div>
@@ -783,9 +1029,19 @@ export default function AdminProductsPage() {
                 <button
                   type="submit"
                   className="btn btn--dark"
-                  disabled={saving}
+                  disabled={saving || uploadingIndex !== null}
+                  style={{
+                    opacity: saving || uploadingIndex !== null ? 0.6 : 1,
+                    cursor: saving || uploadingIndex !== null ? "not-allowed" : "pointer",
+                  }}
                 >
-                  {saving ? "Saving…" : isCreating ? "Create Product" : "Save Changes"}
+                  {uploadingIndex !== null
+                    ? "Uploading Image…"
+                    : saving
+                    ? "Saving…"
+                    : isCreating
+                    ? "Create Product"
+                    : "Save Changes"}
                 </button>
               </div>
             </form>

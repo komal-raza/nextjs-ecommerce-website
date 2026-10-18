@@ -315,7 +315,7 @@ export default function AdminSettingsPage() {
                 type="email"
                 value={settings.contact_email}
                 onChange={(e) => handleChange("contact_email", e.target.value)}
-                placeholder="care@velour.example"
+                placeholder="care@eluara.example"
                 required
               />
             </div>
@@ -378,7 +378,7 @@ export default function AdminSettingsPage() {
                 type="url"
                 value={settings.social_instagram}
                 onChange={(e) => handleChange("social_instagram", e.target.value)}
-                placeholder="https://instagram.com/velour"
+                placeholder="https://instagram.com/eluara"
               />
             </div>
 
@@ -389,7 +389,7 @@ export default function AdminSettingsPage() {
                 type="url"
                 value={settings.social_x}
                 onChange={(e) => handleChange("social_x", e.target.value)}
-                placeholder="https://x.com/velour"
+                placeholder="https://x.com/eluara"
               />
             </div>
 
@@ -400,7 +400,7 @@ export default function AdminSettingsPage() {
                 type="url"
                 value={settings.social_pinterest}
                 onChange={(e) => handleChange("social_pinterest", e.target.value)}
-                placeholder="https://pinterest.com/velour"
+                placeholder="https://pinterest.com/eluara"
               />
             </div>
 
@@ -411,7 +411,7 @@ export default function AdminSettingsPage() {
                 type="url"
                 value={settings.social_facebook}
                 onChange={(e) => handleChange("social_facebook", e.target.value)}
-                placeholder="https://facebook.com/velour"
+                placeholder="https://facebook.com/eluara"
               />
             </div>
 
@@ -422,7 +422,7 @@ export default function AdminSettingsPage() {
                 type="url"
                 value={settings.social_youtube}
                 onChange={(e) => handleChange("social_youtube", e.target.value)}
-                placeholder="https://youtube.com/@velour"
+                placeholder="https://youtube.com/@eluara"
               />
             </div>
           </div>

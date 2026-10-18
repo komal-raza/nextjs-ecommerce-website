@@ -182,7 +182,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 textDecoration: "none",
               }}
             >
-              VELOUR
+              ELUARA
             </Link>
             <span
               style={{
