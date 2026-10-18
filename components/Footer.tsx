@@ -15,7 +15,7 @@ export default async function Footer() {
     <footer className="footer">
       <div className="container footer__grid">
         <div className="footer__brand">
-          <Link href="/" className="logo logo--footer">VELOUR</Link>
+          <Link href="/" className="logo logo--footer">ELUARA</Link>
           <p>
             Premium essentials for men and women. Natural fabrics, timeless silhouettes and
             considered craft — designed to be worn for years, not seasons.
@@ -72,7 +72,7 @@ export default async function Footer() {
         </nav>
       </div>
       <div className="container footer__bottom">
-        <span>© {new Date().getFullYear()} VELOUR. All rights reserved.</span>
+        <span>© {new Date().getFullYear()} ELUARA. All rights reserved.</span>
         <span>Demo store — no real orders are processed.</span>
       </div>
     </footer>

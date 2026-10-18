@@ -12,7 +12,7 @@ export default function Newsletter() {
     <section className="newsletter">
       <div className="container newsletter__inner">
         <div>
-          <p className="micro">The VELOUR letter</p>
+          <p className="micro">The ELUARA letter</p>
           <h2 className="h3">Early access, in your inbox.</h2>
         </div>
         {done ? (

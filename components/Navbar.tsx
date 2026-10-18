@@ -116,7 +116,7 @@ export default function Navbar() {
           ))}
         </nav>
 
-        <Link href="/" className="logo" aria-label="VELOUR home">VELOUR</Link>
+        <Link href="/" className="logo" aria-label="ELUARA home">ELUARA</Link>
 
         <div className="nav__actions">
           <button className="icon-btn" aria-label="Search" onClick={() => setSearchOpen(true)}>
@@ -157,7 +157,7 @@ export default function Navbar() {
         <div className="drawer__scrim" onClick={() => setDrawer(false)} />
         <aside className="drawer__panel">
           <div className="drawer__head">
-            <span className="logo">VELOUR</span>
+            <span className="logo">ELUARA</span>
             <button className="icon-btn" aria-label="Close menu" onClick={() => setDrawer(false)}>
               <CloseIcon />
             </button>
@@ -184,7 +184,7 @@ export default function Navbar() {
           <CloseIcon size={26} />
         </button>
         <form className="search__form container" onSubmit={submit}>
-          <label className="micro" htmlFor="site-search">Search VELOUR</label>
+          <label className="micro" htmlFor="site-search">Search ELUARA</label>
           <input
             id="site-search"
             ref={inputRef}
