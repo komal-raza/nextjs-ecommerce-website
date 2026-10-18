@@ -27,7 +27,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   sale_banner_eyebrow: "Limited time",
   sale_banner_title: "Winter Sale — Up to 40% off",
   sale_banner_text: "Selected coats, knitwear and tailoring. While stocks last.",
-  contact_email: "care@velour.example",
+  contact_email: "care@eluara.example",
   contact_phone: "+1 (555) 010-2030",
   contact_address: "12 Atelier Row, New York, NY",
   contact_hours: "Monday to Friday, 9am – 6pm",

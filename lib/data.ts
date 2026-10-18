@@ -49,10 +49,10 @@ export const CATEGORIES: Category[] = [
 export const DEFAULT_SIZES = ["XS", "S", "M", "L", "XL"];
 export const PLACEHOLDER_IMAGE = "/images/placeholder.svg";
 
-/** Category card images on the homepage (local product photos). */
+/** Category card images on the homepage (collection posters). */
 export const CATEGORY_IMAGES: Record<CategoryId, string> = {
-  women: "/images/products/silk-slip-dress-1.jpg",
-  men: "/images/products/tailored-wool-overcoat-1.jpg",
+  women: "/images/categories/women-collection-poster.png",
+  men: "/images/categories/men-collections-poster.jpg",
 };
 
 /** Optional hand-written demo products (empty — the catalogue is the imported listings). */

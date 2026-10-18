@@ -37,7 +37,8 @@ interface CartContextValue {
   clear: () => void;
 }
 
-const STORAGE_KEY = "velour-cart-v1";
+const STORAGE_KEY = "eluara-cart-v1";
+const LEGACY_STORAGE_KEY = "velour-cart-v1";
 const CartContext = createContext<CartContextValue | null>(null);
 
 interface DbCartRow {
@@ -62,7 +63,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   // 1. Initial hydration from localStorage
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
       if (raw) setItems(JSON.parse(raw) as CartItem[]);
     } catch {
       /* corrupted storage — start fresh */
