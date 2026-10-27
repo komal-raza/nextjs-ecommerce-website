@@ -303,23 +303,23 @@ Populate the required environment variables:
 # -------------------------------------------------------------
 # InsForge Backend Configuration
 # -------------------------------------------------------------
-NEXT_PUBLIC_INSFORGE_URL=https://rehv5rzn.us-east.insforge.app
-NEXT_PUBLIC_INSFORGE_ANON_KEY=ik_aa3db7aa34a03ad07963abc5b5d752f0
-INSFORGE_API_KEY=ik_aa3db7aa34a03ad07963abc5b5d752f0
+NEXT_PUBLIC_INSFORGE_URL=https://your-project.region.insforge.app
+NEXT_PUBLIC_INSFORGE_ANON_KEY=your_insforge_anon_key
+INSFORGE_API_KEY=your_insforge_api_key
 
 # -------------------------------------------------------------
 # Stripe Payment Configuration
 # -------------------------------------------------------------
-STRIPE_SECRET_KEY=sk_test_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_... # Optional
+STRIPE_SECRET_KEY=your_stripe_secret_key
+STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key # Optional
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 # -------------------------------------------------------------
 # Store Owner Admin Configuration
 # -------------------------------------------------------------
-ADMIN_EMAIL=razaa.komal@gmail.com
-NEXT_PUBLIC_ADMIN_EMAIL=razaa.komal@gmail.com
+ADMIN_EMAIL=admin@example.com
+NEXT_PUBLIC_ADMIN_EMAIL=admin@example.com
 ```
 
 > **Note**: `.env.local` contains private keys and is ignored by Git. Never commit production secrets.
@@ -368,7 +368,7 @@ To test Stripe checkout and order confirmation locally:
    stripe listen --forward-to localhost:3000/api/webhooks/stripe
    ```
 
-3. Copy the webhook signing secret printed in your terminal (e.g., `whsec_...`) and update `STRIPE_WEBHOOK_SECRET` in your `.env.local` file.
+3. Copy the webhook signing secret printed in your terminal and update `STRIPE_WEBHOOK_SECRET` in your `.env.local` file.
 
 4. Trigger a simulated payment completion:
    ```bash
@@ -394,7 +394,7 @@ The administrative dashboard is restricted to the authorized store owner:
 - **Storefront Content Settings**: [http://localhost:3000/admin/settings](http://localhost:3000/admin/settings)
 
 ### Access Authorization:
-1. Navigate to `/login` and sign in using the configured `ADMIN_EMAIL` (`razaa.komal@gmail.com`).
+1. Navigate to `/login` and sign in using your configured `ADMIN_EMAIL` (e.g., `admin@example.com`).
 2. Once authenticated, a **Store Owner Dashboard** navigation link appears on your `/profile` page.
 3. Accessing `/admin` as an unauthenticated guest or standard customer presents an access-denied gate with no catalog or financial data exposed.
 
