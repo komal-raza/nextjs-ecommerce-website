@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Product } from "@/lib/data";
 import { money } from "@/lib/format";
+import { PLACEHOLDER_IMAGE } from "@/lib/data";
 import SafeImage from "./SafeImage";
 
 export default function ProductCard({
@@ -10,7 +11,8 @@ export default function ProductCard({
   product: Product;
   priority?: boolean;
 }) {
-  const [primary, hover] = product.images;
+  const primary = product.images?.[0] || PLACEHOLDER_IMAGE;
+  const hover = product.images?.[1] && product.images[1] !== primary ? product.images[1] : undefined;
   const onSale = product.compareAtPrice && product.compareAtPrice > product.price;
 
   return (

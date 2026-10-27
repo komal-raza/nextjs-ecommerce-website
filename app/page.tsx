@@ -6,6 +6,9 @@ import Newsletter from "@/components/Newsletter";
 import { getFeatured, getNewArrivals, getTrending } from "@/lib/api";
 import { getSiteSettings } from "@/lib/settings";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function HomePage() {
   const [featured, fresh, trending, settings] = await Promise.all([
     getFeatured(8),

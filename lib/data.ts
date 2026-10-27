@@ -19,8 +19,8 @@ export interface Product {
   compareAtPrice?: number;
   description: string;
   sizes: string[];
-  /** [primary, hover] */
-  images: [string, string];
+  /** Image URLs: primary, hover, and any additional gallery images */
+  images: string[];
   featured?: boolean;
   isNew?: boolean;
   trending?: boolean;

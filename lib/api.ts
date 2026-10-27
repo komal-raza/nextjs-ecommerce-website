@@ -7,7 +7,7 @@
  * against the InsForge `products` table.
  */
 import { insforge } from "./insforge";
-import type { CategoryId, Product } from "./data";
+import { PLACEHOLDER_IMAGE, type CategoryId, type Product } from "./data";
 
 export type SortKey = "featured" | "price-asc" | "price-desc" | "newest";
 
@@ -37,7 +37,8 @@ interface ProductDbRow {
 }
 
 function rowToProduct(row: ProductDbRow): Product {
-  const images = (Array.isArray(row.images) ? row.images : []) as string[];
+  const rawImages = (Array.isArray(row.images) ? row.images : []) as string[];
+  const validImages = rawImages.map((s) => String(s).trim()).filter(Boolean);
   return {
     id: row.id,
     name: row.name,
@@ -47,7 +48,7 @@ function rowToProduct(row: ProductDbRow): Product {
     compareAtPrice: row.compare_at_price != null ? Number(row.compare_at_price) : undefined,
     description: row.description,
     sizes: Array.isArray(row.sizes) ? row.sizes : [],
-    images: [images[0] || "", images[1] || images[0] || ""],
+    images: validImages.length > 0 ? validImages : [PLACEHOLDER_IMAGE],
     featured: Boolean(row.featured),
     isNew: Boolean(row.is_new),
     trending: Boolean(row.trending),
@@ -79,10 +80,21 @@ export async function getProducts(opts: ProductQuery = {}): Promise<Product[]> {
   }
 
   if (query?.trim()) {
-    const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
+    const terms = query
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, "")
+      .split(/\s+/)
+      .filter(Boolean);
+
     list = list.filter(({ p }) => {
-      const hay = `${p.name} ${p.description} ${p.category} ${p.subcategory}`.toLowerCase();
-      return terms.every((t) => hay.includes(t));
+      const hay = `${p.name} ${p.description || ""} ${p.category || ""} ${p.subcategory || ""}`.toLowerCase();
+      return terms.every((t) => {
+        if (hay.includes(t)) return true;
+        if (t.endsWith("es") && t.length > 4 && hay.includes(t.slice(0, -2))) return true;
+        if (t.endsWith("s") && t.length > 3 && hay.includes(t.slice(0, -1))) return true;
+        if (!t.endsWith("s") && (hay.includes(t + "s") || hay.includes(t + "es"))) return true;
+        return false;
+      });
     });
   }
 

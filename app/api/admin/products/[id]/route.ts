@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { verifyAdmin } from "@/lib/admin";
 import { getInsforgeAdmin } from "@/lib/insforge";
 
@@ -95,6 +96,14 @@ export async function PATCH(
       return NextResponse.json({ error: updateErr.message }, { status: 500 });
     }
 
+    try {
+      revalidatePath("/", "layout");
+      revalidatePath(`/product/${id}`, "page");
+      revalidatePath("/women");
+      revalidatePath("/men");
+      revalidatePath("/search");
+    } catch {}
+
     return NextResponse.json({ product: updated });
   } catch (err: unknown) {
     return NextResponse.json({ error: (err as Error).message || "Internal server error" }, { status: 500 });
@@ -125,6 +134,14 @@ export async function DELETE(
     if (delErr) {
       return NextResponse.json({ error: delErr.message }, { status: 500 });
     }
+
+    try {
+      revalidatePath("/", "layout");
+      revalidatePath(`/product/${id}`, "page");
+      revalidatePath("/women");
+      revalidatePath("/men");
+      revalidatePath("/search");
+    } catch {}
 
     return NextResponse.json({ success: true, deletedId: id });
   } catch (err: unknown) {

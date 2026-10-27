@@ -1,6 +1,6 @@
+.next/
 assets/
 incoming/
 scripts/
 *.mjs
 *.log
-

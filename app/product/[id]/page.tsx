@@ -9,9 +9,8 @@ import { money } from "@/lib/format";
 
 type Props = { params: Promise<{ id: string }> };
 
-export async function generateStaticParams() {
-  return (await getAllProductIds()).map((id) => ({ id }));
-}
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;

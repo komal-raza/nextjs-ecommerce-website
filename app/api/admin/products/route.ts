@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { verifyAdmin } from "@/lib/admin";
 import { getInsforgeAdmin } from "@/lib/insforge";
 
@@ -108,6 +109,13 @@ export async function POST(req: NextRequest) {
     if (insertErr || !created) {
       return NextResponse.json({ error: insertErr?.message || "Failed to create product" }, { status: 500 });
     }
+
+    try {
+      revalidatePath("/", "layout");
+      revalidatePath("/women");
+      revalidatePath("/men");
+      revalidatePath("/search");
+    } catch {}
 
     return NextResponse.json({ product: created });
   } catch (err: unknown) {
